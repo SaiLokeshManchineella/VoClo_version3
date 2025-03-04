@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2>Create Account</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <ul class="flash-messages">
+                {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-user icon"></i>Full Name
+                    </label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope icon"></i>Email Address
+                    </label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock icon"></i>Password
+                    </label>
+                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password_confirm">
+                        <i class="fas fa-check-circle icon"></i>Confirm Password
+                    </label>
+                    <input type="password" id="password_confirm" name="password_confirm"
+                        placeholder="Confirm your password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="image">
+                        <i class="fas fa-camera icon"></i>Face authentication
+                    </label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="image" name="image" accept="image/*" required>
+                        <div class="file-input-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Click to upload your photo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit">
+                    <i class="fas fa-user-plus icon"></i>Create Account
+                </button>
+            </form>
+
+            <div class="footer">
+                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+
+                <a href="{{ url_for('home') }}" class="home-btn">
+                    <i class="fas fa-home"> H o m e</i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show selected filename in the label
+        document.getElementById('image').addEventListener('change', function (e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const fileLabel = document.querySelector('.file-input-label span');
+                fileLabel.textContent = fileName;
+                document.querySelector('.file-input-label').style.borderColor = '#4A90E2';
+            }
+        });
+    </script>
+</body>
+
+</html>
