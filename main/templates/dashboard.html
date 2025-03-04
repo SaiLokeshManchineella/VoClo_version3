@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoClo Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .wave-animation {
+            position: relative;
+            height: 60px;
+            display: none;
+        }
+
+        .wave-animation.active {
+            display: block;
+        }
+
+        .wave {
+            background: #4CAF50;
+            height: 100%;
+            width: 3px;
+            display: inline-block;
+            margin: 0 2px;
+            animation: wave 1s infinite ease-in-out;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: scaleY(0.3);
+            }
+
+            50% {
+                transform: scaleY(1);
+            }
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .slide-down {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+
+        .slide-down.active {
+            max-height: 500px;
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            width: 200px;
+            z-index: 100;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .audio-player {
+            border-radius: 30px;
+            background: #f1f3f4;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .audio-player button {
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .audio-progress {
+            flex-grow: 1;
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .audio-progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #4CAF50;
+            border-radius: 3px;
+            width: 20%;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <a href="{{ url_for('dashboard') }}" class="text-2xl font-bold text-blue-600 flex items-center">
+                    <i class="fas fa-microphone-alt mr-2"></i>
+                    <span>VoClo</span>
+                </a>
+
+                <!-- Nav Buttons -->
+                <div class="flex items-center space-x-4">
+                    <button id="contact-button"
+                        class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-200 transition">
+                        <i class="fas fa-address-book mr-1"></i> Contact
+                    </button>
+
+                    <div class="relative" id="profile-container">
+                        <button id="profile-button"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center">
+                            <i class="fas fa-user-circle mr-1"></i> {{ user.name }}
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <div class="p-3 border-b border-gray-200">
+                                <div class="font-semibold text-gray-800">{{ user.name }}</div>
+                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                            </div>
+                            <a href="{{ url_for('profile') }}" class="block p-3 hover:bg-gray-100 transition">
+                                <i class="fas fa-user-cog mr-2 text-gray-600"></i> Profile Settings
+                            </a>
+                            <a href="{{ url_for('logout') }}"
+                                class="block p-3 hover:bg-gray-100 transition text-red-500">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-200 mb-8">
+            <button class="tab-button py-3 px-6 font-medium text-blue-600 border-b-2 border-blue-600"
+                data-tab="dashboard">
+                <i class="fas fa-th-large mr-2"></i> Dashboard
+            </button>
+            <button class="tab-button py-3 px-6 font-medium text-gray-500 hover:text-gray-700"
+                data-tab="voice-profiles">
+                <i class="fas fa-user-tag mr-2"></i> Voice Profiles
+            </button>
+            <button class="tab-button py-3 px-6 font-medium text-gray-500 hover:text-gray-700" data-tab="clone-voice">
+                <i class="fas fa-clone mr-2"></i> Clone a Voice
+            </button>
+            <button class="tab-button py-3 px-6 font-medium text-gray-500 hover:text-gray-700" data-tab="detector">
+                <i class="fas fa-robot mr-2"></i> AI Voice Detector
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard-tab">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Voice Profiles Card -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
+                            <i class="fas fa-user-tag text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold ml-4">Voice Profiles</h2>
+                    </div>
+
+                    <p class="text-gray-600 mb-8 flex-grow">Manage and access your saved voice profiles for quick use
+                        across applications.</p>
+
+                    <div class="mt-auto flex justify-between items-center">
+                        <span class="text-gray-500"><i class="fas fa-check-circle mr-1"></i> 3 Profiles</span>
+                        <button onclick="openTab('voice-profiles')"
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                            <i class="fas fa-arrow-right mr-1"></i> View Profiles
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Clone a Voice Card -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <div class="flex items-center mb-4">
+                        <div
+                            class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                            <i class="fas fa-clone text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold ml-4">Clone a Voice</h2>
+                    </div>
+
+                    <p class="text-gray-600 mb-8 flex-grow">Create a new voice clone using our advanced AI technology
+                        with just a few audio samples.</p>
+
+                    <div class="mt-auto flex justify-between items-center">
+                        <span class="text-gray-500"><i class="fas fa-clock mr-1"></i> Takes ~5 mins</span>
+                        <button onclick="openTab('clone-voice')"
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                            <i class="fas fa-plus mr-1"></i> New Clone
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Voice Detector Card -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <div class="flex items-center mb-4">
+                        <div
+                            class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
+                            <i class="fas fa-robot text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold ml-4">AI Voice Detector</h2>
+                    </div>
+
+                    <p class="text-gray-600 mb-8 flex-grow">Analyze audio samples to detect if a voice is human or
+                        AI-generated with high accuracy.</p>
+
+                    <div class="mt-auto flex justify-between items-center">
+                        <span class="text-gray-500"><i class="fas fa-shield-alt mr-1"></i> 98% Accuracy</span>
+                        <button onclick="openTab('detector')"
+                            class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition">
+                            <i class="fas fa-search mr-1"></i> Try Detector
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 p-3 rounded-full text-blue-500">
+                                <i class="fas fa-user-tag"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="font-medium">Voice Profile Created</p>
+                                <p class="text-sm text-gray-500">You created a new voice profile "Business Voice"</p>
+                                <p class="text-xs text-gray-400 mt-1">Today, 10:45 AM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-3 rounded-full text-green-500">
+                                <i class="fas fa-clone"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="font-medium">Voice Clone Completed</p>
+                                <p class="text-sm text-gray-500">Your voice clone "Casual Voice" is now ready to use</p>
+                                <p class="text-xs text-gray-400 mt-1">Yesterday, 5:30 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-3 rounded-full text-purple-500">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="font-medium">Voice Detection Performed</p>
+                                <p class="text-sm text-gray-500">Analyzed 3 audio samples with 98% confidence score</p>
+                                <p class="text-xs text-gray-400 mt-1">Feb 20, 2025, 2:15 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Profiles Tab -->
+        <div class="tab-content hidden" id="voice-profiles-tab">
+            <div class="flex justify-between mb-6">
+                <h2 class="text-2xl font-bold">Your Voice Profiles</h2>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                    <i class="fas fa-plus mr-1"></i> Create New Profile
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Voice Profile 1 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-semibold">Business Voice</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-500 hover:text-blue-500">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    <div class="audio-player mb-4">
+                        <button class="play-btn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="audio-progress">
+                            <div class="audio-progress-fill"></div>
+                        </div>
+                        <span class="text-xs text-gray-500">0:45</span>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2">Metadata</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span class="text-gray-500">Created:</span>
+                                <span class="font-medium">Feb 25, 2025</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Duration:</span>
+                                <span class="font-medium">1:24</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Quality:</span>
+                                <span class="font-medium">High</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Format:</span>
+                                <span class="font-medium">WAV</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Tags:</span>
+                                <span class="font-medium">Professional, Formal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice Profile 2 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-semibold">Casual Voice</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-500 hover:text-blue-500">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    <div class="audio-player mb-4">
+                        <button class="play-btn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="audio-progress">
+                            <div class="audio-progress-fill" style="width: 35%;"></div>
+                        </div>
+                        <span class="text-xs text-gray-500">1:15</span>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2">Metadata</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span class="text-gray-500">Created:</span>
+                                <span class="font-medium">Feb 20, 2025</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Duration:</span>
+                                <span class="font-medium">2:10</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Quality:</span>
+                                <span class="font-medium">High</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Format:</span>
+                                <span class="font-medium">WAV</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Tags:</span>
+                                <span class="font-medium">Casual, Natural</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice Profile 3 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-semibold">Podcast Voice</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-gray-500 hover:text-blue-500">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    <div class="audio-player mb-4">
+                        <button class="play-btn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="audio-progress">
+                            <div class="audio-progress-fill" style="width: 75%;"></div>
+                        </div>
+                        <span class="text-xs text-gray-500">2:30</span>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2">Metadata</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span class="text-gray-500">Created:</span>
+                                <span class="font-medium">Feb 15, 2025</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Duration:</span>
+                                <span class="font-medium">3:45</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Quality:</span>
+                                <span class="font-medium">Ultra</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Format:</span>
+                                <span class="font-medium">WAV</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Tags:</span>
+                                <span class="font-medium">Podcast, Clear</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clone a Voice Tab -->
+        <div class="tab-content hidden" id="clone-voice-tab">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">Clone a Voice</h2>
+                <p class="text-gray-600">Create a personalized AI voice clone with just a few minutes of recording.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-4">
+                        <span class="font-bold">1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold">Set Up Your Voice Profile</h3>
+                </div>
+
+                <div class="ml-14">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Profile Name</label>
+                            <input type="text" placeholder="E.g., My Professional Voice"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Voice Type</label>
+                            <select
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                                <option>Professional</option>
+                                <option>Casual</option>
+                                <option>Podcast</option>
+                                <option>Narration</option>
+                                <option>Custom</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags (optional)</label>
+                        <input type="text" placeholder="E.g., clear, professional, formal"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <p class="text-xs text-gray-500 mt-1">Separate tags with commas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-4">
+                        <span class="font-bold">2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold">Record Voice Samples</h3>
+                </div>
+
+                <div class="ml-14">
+                    <p class="text-gray-600 mb-4">Record at least 3 samples of your voice reading the provided text.</p>
+
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h4 class="font-medium mb-2">Sample Text #1</h4>
+                        <p class="text-gray-700">"The quick brown fox jumps over the lazy dog. Voice cloning technology
+                            has advanced significantly in recent years, allowing for more natural-sounding synthetic
+                            voices."</p>
+
+                        <div class="mt-4 flex items-center">
+                            <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition mr-4">
+                                <i class="fas fa-microphone mr-1"></i> Start Recording
+                            </button>
+                            <span class="text-gray-500 text-sm">Not recorded yet</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h4 class="font-medium mb-2">Sample Text #2</h4>
+                        <p class="text-gray-700">"How much wood would a woodchuck chuck if a woodchuck could chuck wood?
+                            The technology behind voice synthesis continues to evolve rapidly, creating increasingly
+                            realistic voices."</p>
+
+                        <div class="mt-4 flex items-center">
+                            <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition mr-4">
+                                <i class="fas fa-microphone mr-1"></i> Start Recording
+                            </button>
+                            <span class="text-gray-500 text-sm">Not recorded yet</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h4 class="font-medium mb-2">Sample Text #3</h4>
+                        <p class="text-gray-700">"She sells seashells by the seashore. The shells she sells are surely
+                            seashells. Modern voice cloning can be used for various applications including accessibility
+                            features and content creation."</p>
+
+                        <div class="mt-4 flex items-center">
+                            <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition mr-4">
+                                <i class="fas fa-microphone mr-1"></i> Start Recording
+                            </button>
+                            <span class="text-gray-500 text-sm">Not recorded yet</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-4">
+                        <span class="font-bold">3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold">Generate Your Voice Clone</h3>
+                </div>
+
+                <div class="ml-14">
+                    <p class="text-gray-600 mb-4">Once you've recorded all samples, click the button below to generate
+                        your voice clone.</p>
+
+                    <button
+                        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        <i class="fas fa-magic mr-2"></i> Generate Voice Clone
+                    </button>
+                    <p class="text-sm text-gray-500 mt-2">You must complete all recordings before generating</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Voice Detector Tab -->
+        <div class="tab-content hidden" id="detector-tab">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">AI Voice Detector</h2>
+                <p class="text-gray-600">Analyze audio samples to determine if a voice is human or AI-generated.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Upload Audio Sample</h3>
+
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600 mb-2">Drag and drop your audio file here</p>
+                        <p class="text-xs text-gray-500 mb-4">Supported formats: MP3, WAV (Max 10MB)</p>
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-folder-open mr-1"></i> Browse Files
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium mb-2">Quick Tips</h4>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc pl-5">
+                            <li>Use high-quality audio samples for best results</li>
+                            <li>Ensure the sample is at least 5 seconds long</li>
+                            <li>Avoid audio with background noise or music</li>
+                            <li>For most accurate results, use unprocessed audio</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Results</h3>
+
+                    <div class="bg-gray-50 p-6 rounded-lg text-center h-64 flex flex-col items-center justify-center">
+                        <i class="fas fa-search text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600">Upload an audio sample to see detection results</p>
+                    </div>
+
+                    <button
+                        class="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled>
+                        <i class="fas fa-robot mr-2"></i> Run Detection
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-4">Recent Detections</h3>

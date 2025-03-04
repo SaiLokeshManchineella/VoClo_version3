@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoClo - Advanced Voice Cloning Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .logo-text {
+            background: linear-gradient(45deg, #4A90E2, #9013FE);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4A90E2 0%, #9013FE 100%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-3xl logo-text">VoClo</h1>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/login" class="px-4 py-2 rounded-md text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="/register"
+                        class="px-4 py-2 rounded-md text-white gradient-bg hover:opacity-90">Register</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="pt-24 pb-16 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl font-bold mb-8 logo-text">Transform Your Voice with VoClo</h1>
+            <p class="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+                Advanced AI-powered voice cloning platform with real-time authentication and voice metadata analysis.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <a href="/register" class="px-8 py-4 rounded-lg text-white gradient-bg hover:opacity-90">
+                    Get Started
+                </a>
+                <a href="#features"
+                    class="px-8 py-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Key Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="feature-card p-6 rounded-lg shadow-lg bg-white">
+                    <div class="text-4xl mb-4 gradient-bg inline-block p-3 rounded-lg text-white">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Voice Cloning</h3>
+                    <p class="text-gray-600">Create perfect voice replicas with our advanced AI technology</p>
+                </div>
+                <div class="feature-card p-6 rounded-lg shadow-lg bg-white">
+                    <div class="text-4xl mb-4 gradient-bg inline-block p-3 rounded-lg text-white">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Voice Authentication</h3>
+                    <p class="text-gray-600">Secure multi-factor authentication using voice recognition</p>
+                </div>
+                <div class="feature-card p-6 rounded-lg shadow-lg bg-white">
+                    <div class="text-4xl mb-4 gradient-bg inline-block p-3 rounded-lg text-white">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Voice Analysis</h3>
+                    <p class="text-gray-600">Detailed voice metadata analysis and AI detection</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="text-3xl mb-4">1</div>
+                    <h3 class="font-bold mb-2">Register</h3>
+                    <p class="text-gray-600">Create your account with email verification</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-4">2</div>
+                    <h3 class="font-bold mb-2">Verify</h3>
+                    <p class="text-gray-600">Complete face and voice authentication</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-4">3</div>
+                    <h3 class="font-bold mb-2">Train</h3>
+                    <p class="text-gray-600">Train your voice clone model</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-4">4</div>
+                    <h3 class="font-bold mb-2">Create</h3>
+                    <p class="text-gray-600">Generate voice clones and analyze voice data</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">VoClo</h3>
+                    <p class="text-gray-400">Advanced voice cloning and analysis platform</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="#features" class="text-gray-400 hover:text-white">Features</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Documentation</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Connect</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center pt-8 border-t border-gray-700">
+                <p class="text-gray-400">&copy; 2025 VoClo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

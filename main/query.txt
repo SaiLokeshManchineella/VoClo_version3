@@ -1,0 +1,516 @@
+I have a project , with the follwing directory structure
+
+	static
+	templates
+		login.html
+		register.html
+		verify_otp.html
+	Uploads
+	User faces
+	app.py
+	dashboard.py
+	login.py
+	users.db
+
+
+login.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <label for="face_image">Upload Your Face Image:</label>
+        <input type="file" id="face_image" name="face_image" accept="image/*" required><br><br>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+</body>
+</html>
+
+
+register.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        /* Background color and basic styling */
+        body {
+            background-color: #f0f8ff; /* Light blue background */
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Center the registration form */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .form-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50; /* Green background */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green */
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+        }
+
+        .success-message {
+            color: green;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .footer a {
+            text-decoration: none;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="form-container">
+            <h2>Register</h2>
+            <form method="POST" enctype="multipart/form-data">
+                <!-- Name -->
+                <input type="text" name="name" placeholder="Enter your name" required><br>
+                <!-- Email -->
+                <input type="email" name="email" placeholder="Enter your email" required><br>
+                <!-- Password -->
+                <input type="password" name="password" placeholder="Enter your password" required><br>
+                <!-- Confirm Password -->
+                <input type="password" name="password_confirm" placeholder="Confirm your password" required><br>
+                <!-- Face Image Upload -->
+                <input type="file" name="image" accept="image/*" required><br>
+                
+                <!-- Submit Button -->
+                <button type="submit">Register</button>
+            </form>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="error-message">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <p class="footer">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
+verify_otp.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP</title>
+</head>
+<body>
+    <h2>Enter OTP to Verify Your Email</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        <label for="otp">OTP:</label>
+        <input type="text" id="otp" name="otp" required><br><br>
+        <button type="submit">Verify OTP</button>
+    </form>
+
+    <p>Already verified? <a href="{{ url_for('login') }}">Login here</a></p>
+</body>
+</html>
+
+
+
+app.py
+
+
+import os
+import random
+import string
+import cv2
+import numpy as np
+from flask import Flask, render_template, request, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
+from skimage.metrics import structural_similarity as ssim
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+
+# Configuring Flask Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'developerharry18@gmail.com'  # Your email here
+app.config['MAIL_PASSWORD'] = 'lnih xtny skah fskw'  # Your email password here
+app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
+
+mail = Mail(app)
+
+# Mock database for users (simulating a simple in-memory database)
+users_db = {}
+otp_db = {}
+
+# Helper function to check if the uploaded file has a valid extension
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+# Ensure the uploads directory exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# Helper function to send OTP email
+def send_otp(email):
+    otp = ''.join(random.choices(string.digits, k=6))  # Generate a 6-digit OTP
+    msg = Message('Your OTP for Email Verification', sender='developerharry18@gmail.com', recipients=[email])
+    msg.body = f'Your OTP is: {otp}'
+    
+    try:
+        mail.send(msg)
+        return otp
+    except Exception as e:
+        flash(f"Error sending OTP: {e}", 'danger')
+        return None
+
+# Route for the home page
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+# Route for the login page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        uploaded_face_image = request.files.get('face_image')
+
+        # Check if the user exists in the mock database
+        if email in users_db and check_password_hash(users_db[email]['password'], password):
+            # Ensure the face image was uploaded
+            if uploaded_face_image and allowed_file(uploaded_face_image.filename):
+                # Save the uploaded face image temporarily
+                uploaded_face_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_' + uploaded_face_image.filename)
+                uploaded_face_image.save(uploaded_face_path)
+
+                # Now, compare the uploaded face image with the stored face image
+                if authenticate_face(email, uploaded_face_path):
+                    flash('Login successful!', 'success')
+                    return redirect("http://127.0.0.1:7860")  # Redirect to home or any protected page
+                else:
+                    flash('Face authentication failed', 'danger')
+            else:
+                flash('Invalid face image or no image uploaded', 'danger')
+        else:
+            flash('Invalid email or password', 'danger')
+    
+    return render_template('login.html')
+
+# Function to authenticate the face by comparing the stored image with the uploaded image
+def authenticate_face(email, uploaded_face_path):
+    # Load the stored face image for the email
+    stored_face_image_path = users_db[email]['image']
+    stored_face = cv2.imread(stored_face_image_path, cv2.IMREAD_GRAYSCALE)
+
+    # Load the uploaded face image
+    uploaded_face = cv2.imread(uploaded_face_path, cv2.IMREAD_GRAYSCALE)
+
+    # Compare the uploaded face image with the stored face image
+    if compare_images(stored_face, uploaded_face):
+        return True
+    else:
+        return False
+
+# Function to compare two images (MSE and SSIM comparison)
+def compare_images(image1, image2):
+    # Resize the images to match the size (optional)
+    image1_resized = cv2.resize(image1, (image2.shape[1], image2.shape[0]))
+
+    # Compute MSE and SSIM
+    mse_value = mean_squared_error(image1_resized, image2)
+    ssim_value = compute_ssim(image1_resized, image2)
+
+    print(f"MSE: {mse_value}, SSIM: {ssim_value}")
+
+    # Define a threshold for similarity (you can adjust this based on your needs)
+    if mse_value < 1000 and ssim_value > 0.7:  # Thresholds can be adjusted
+        return True
+    else:
+        return False
+
+# Compute Mean Squared Error (MSE)
+def mean_squared_error(image1, image2):
+    err = np.sum((image1.astype("float") - image2.astype("float")) ** 2)
+    err /= float(image1.shape[0] * image2.shape[1])
+    return err
+
+# Compute Structural Similarity Index (SSIM)
+def compute_ssim(image1, image2):
+    return ssim(image1, image2)
+
+# Route for the registration page
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        password_confirm = request.form['password_confirm']
+        
+        if password != password_confirm:
+            flash("Passwords do not match!", "danger")
+        elif email in [user['email'] for user in users_db.values()]:
+            flash("Email already exists!", "danger")
+        else:
+            # Check for file upload (face image)
+            if 'image' not in request.files:
+                flash("No file part", "danger")
+                return redirect(request.url)
+            
+            image = request.files['image']
+            if image and allowed_file(image.filename):
+                # Save the image to the uploads folder
+                filename = secure_filename(image.filename)
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                image.save(image_path)
+
+                # Hash the password before storing it
+                hashed_password = generate_password_hash(password)
+                
+                # Store user data (including face image path)
+                users_db[email] = {
+                    'name': name,
+                    'email': email,
+                    'password': hashed_password,
+                    'image': image_path,  # Store the face image path
+                    'verified': False  # Add a 'verified' flag to check if the email is verified
+                }
+
+                # Send OTP to email
+                otp = send_otp(email)
+                if otp:
+                    otp_db[email] = otp  # Store the OTP temporarily for verification
+                    flash('Registration successful! An OTP has been sent to your email.', 'success')
+                    return redirect(url_for('verify_otp', email=email))
+            else:
+                flash("Invalid file type. Only PNG, JPG, JPEG are allowed.", "danger")
+    
+    return render_template('register.html')
+
+# Route for OTP verification page
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    email = request.args.get('email')
+    otp_sent = otp_db.get(email)  # Retrieve OTP from the stored database
+
+    if request.method == 'POST':
+        otp_entered = request.form['otp']
+        if otp_entered == otp_sent:
+            # Mark the user as verified
+            users_db[email]['verified'] = True
+            del otp_db[email]  # Remove the OTP after successful verification
+            flash('OTP verified successfully! You can now log in.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Invalid OTP. Please try again.', 'danger')
+
+    return render_template('verify_otp.html', email=email)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+login.py
+
+
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import sqlite3
+import bcrypt
+import pyotp
+import os
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+
+# Ensure the database is set up correctly
+def create_db():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        otp_secret TEXT NOT NULL,
+        face_image_path TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+# Route to the login page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        otp = request.form['otp']
+        uploaded_face_image = request.files['face_image']
+
+        # Get user from DB
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE email = ?", (email,))
+        user = c.fetchone()
+        conn.close()
+
+        if not user:
+            flash("User not found", 'danger')
+            return redirect(url_for('login'))
+
+        # Check password
+        stored_password = user[2]
+        if not bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+            flash("Invalid password", 'danger')
+            return redirect(url_for('login'))
+
+        # Verify OTP
+        otp_secret = user[3]
+        if otp_secret is None:
+            flash("OTP secret is missing. Please contact support.", 'danger')
+            return redirect(url_for('login'))
+
+        totp = pyotp.TOTP(otp_secret)
+        if otp != totp.now():
+            flash("Invalid OTP", 'danger')
+            return redirect(url_for('login'))
+
+        # Face Image Authentication
+        if uploaded_face_image:
+            face_image_filename = secure_filename(uploaded_face_image.filename)
+            uploaded_face_image.save(os.path.join('user_faces', face_image_filename))
+
+            # Compare face image path
+            stored_face_image_path = user[4]
+            if os.path.join('user_faces', face_image_filename) != stored_face_image_path:
+                flash("Face image does not match", 'danger')
+                return redirect(url_for('login'))
+
+        # If everything is correct, log in the user
+        session['email'] = email
+        flash("Login successful!", 'success')
+        return redirect(url_for('dashboard'))
+
+    return render_template('login.html')
+
+# Route to the dashboard
+@app.route('/dashboard')
+def dashboard():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html')
+
+if __name__ == '__main__':
+    create_db()
+    app.run(debug=True)
+
+
+
+
+
