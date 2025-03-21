@@ -28,3 +28,4 @@ streamlit==1.42.2
 tensorboard==2.19.0
 tensorflow==2.19.0
 watchdog==6.0.0
+pydub
