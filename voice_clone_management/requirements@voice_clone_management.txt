@@ -31,4 +31,5 @@ watchdog==6.0.0
 pydub
 pyaudio
 streamlit-webrtc
+!bash setup.sh
 
