@@ -14,7 +14,7 @@ idna==3.10
 joblib==1.4.2
 jsonschema==4.23.0
 keras==3.9.0
-librosa==0.10.2.post1
+librosa==0.10.2.post1 
 matplotlib==3.10.1
 numba==0.61.0
 numpy==2.1.3
