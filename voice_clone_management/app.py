@@ -6,11 +6,11 @@ import eyed3
 import os
 import platform
 import tempfile
-import pyaudio
 import soundfile as sf
 import time
 import wave
 import base64
+from streamlit_webrtc import webrtc_streamer
 
 # Set page configuration
 st.set_page_config(
@@ -777,25 +777,34 @@ def record_audio(duration=5, sample_rate=44100):
         st.error(f"Error recording audio: {str(e)}")
         return None
 def upload_voice_module():
-    """Function to handle the upload cloned voice page"""
+    """Upload Cloned Voice"""
     section_heading("Upload Cloned Voice")
     
     with st.container():
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         
-        uploaded_file = st.file_uploader("Upload cloned voice file", type=['wav'])
+        uploaded_file = st.file_uploader("Upload cloned voice file", type=['wav', 'mp3'])
         
         if uploaded_file:
-            st.audio(uploaded_file)
+            file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+            temp_file_path = os.path.join(tempfile.gettempdir(), uploaded_file.name)
+            
+            with open(temp_file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            if file_extension == '.wav':
+                st.audio(temp_file_path, format='audio/wav')
+            elif file_extension == '.mp3':
+                st.audio(temp_file_path, format='audio/mp3')
             
             with st.form("voice_metadata"):
                 col1, col2 = st.columns(2)
                 with col1:
-                    name = st.text_input("Person's Name")
+                    name = st.text_input("Person's Name", value=os.path.splitext(uploaded_file.name)[0])
                 with col2:
-                    title = st.text_input("Voice Title")
+                    title = st.text_input("Voice Title", value=os.path.splitext(uploaded_file.name)[0])
                 
-                description = st.text_area("Description")
+                description = st.text_area("Description", "Enter a description for the voice profile")
                 
                 submit = st.form_submit_button("Save Voice Profile")
                 
@@ -806,7 +815,7 @@ def upload_voice_module():
                         'description': description
                     }
                     
-                    wav_path, mp3_path = save_cloned_voice(uploaded_file, metadata)
+                    wav_path, mp3_path = save_cloned_voice(temp_file_path, metadata)
                     if wav_path and mp3_path:
                         st.success("Voice profile saved successfully!")
                         
@@ -818,7 +827,6 @@ def upload_voice_module():
                             )
         
         st.markdown('</div>', unsafe_allow_html=True)
-
 def view_profiles_module():
     """Function to handle the view voice profiles page"""
     section_heading("Voice Profiles")
