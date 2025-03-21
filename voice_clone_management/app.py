@@ -743,7 +743,7 @@ def record_with_file_uploader():
 
 # Modified record audio function with device selection
 # Function to record audio using PyAudio
-def record_audio(duration=5, sample_rate=44100):
+'''def record_audio(duration=5, sample_rate=44100):
     """
     Record audio using PyAudio as an alternative to sounddevice.
     """
@@ -775,7 +775,46 @@ def record_audio(duration=5, sample_rate=44100):
         return filepath
     except Exception as e:
         st.error(f"Error recording audio: {str(e)}")
+        return None'''
+
+def record_audio():
+    """
+    Record and save audio using streamlit-webrtc with exception handling.
+    """
+    try:
+        webrtc_ctx = webrtc_streamer(
+            key="record_audio",
+            mode=WebRtcMode.SENDRECV,
+            audio_receiver_size=256,
+            media_stream_constraints={"video": False, "audio": True},
+        )
+
+        if webrtc_ctx.audio_receiver:
+            audio_frames = webrtc_ctx.audio_receiver.get_frames(timeout=1)
+            if audio_frames:
+                audio = np.concatenate([frame.to_ndarray() for frame in audio_frames])
+                sample_rate = audio_frames[0].sample_rate
+                timestamp = int(time.time())
+                filename = f"recorded_voice_{timestamp}.wav"
+                filepath = os.path.join(RECORDED_DIR, filename)
+                
+                sf.write(filepath, audio, sample_rate)
+                st.success(f"Recording saved: {filepath}")
+                st.audio(filepath, format="audio/wav")
+                
+                with open(filepath, "rb") as file:
+                    st.download_button(
+                        "Download Recorded Audio",
+                        file,
+                        file_name=filename,
+                        mime="audio/wav"
+                    )
+                
+                return filepath
+    except Exception as e:
+        st.error(f"Error recording audio: {str(e)}")
         return None
+
 def upload_voice_module():
     """Upload Cloned Voice"""
     section_heading("Upload Cloned Voice")
