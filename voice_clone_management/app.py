@@ -4,10 +4,9 @@ import numpy as np
 import pickle
 import eyed3
 import os
-from pydub import AudioSegment
 import platform
 import tempfile
-import sounddevice as sd
+import pyaudio
 import soundfile as sf
 import time
 import wave
@@ -728,13 +727,8 @@ def list_audio_devices():
     
     return input_devices
 
-# Alternative recording function using streamlit-webrtc
 def record_with_file_uploader():
-    """
-    Alternative method using file uploader instead of direct recording
-    """
     uploaded_file = st.file_uploader("Upload a recorded voice sample", type=["wav", "mp3"])
-    
     if uploaded_file:
         timestamp = int(time.time())
         filename = f"uploaded_voice_{timestamp}{os.path.splitext(uploaded_file.name)[1]}"
@@ -745,50 +739,43 @@ def record_with_file_uploader():
         
         st.success(f"Audio saved to {filepath}")
         return filepath
-    
     return None
 
 # Modified record audio function with device selection
-def record_audio(duration=5, sample_rate=44100, device=None):
+# Function to record audio using PyAudio
+def record_audio(duration=5, sample_rate=44100):
     """
-    Record audio from the user's microphone with device selection
+    Record audio using PyAudio as an alternative to sounddevice.
     """
     try:
-        with st.spinner(f"Recording for {duration} seconds..."):
-            recording_bar = st.progress(0)
-            
-            # Create a placeholder for recording status
-            status_text = st.empty()
-            
-            # Record audio
-            audio_data = sd.rec(int(duration * sample_rate), 
-                               samplerate=sample_rate, 
-                               channels=1, 
-                               dtype='float32',
-                               device=device)
-            
-            # Show progress
-            for i in range(100):
-                time.sleep(duration/100)
-                recording_bar.progress(i + 1)
-                status_text.text(f"Recording: {int((i+1)/100 * duration)} seconds...")
-                
-            sd.wait()  # Wait until recording is finished
-            status_text.text("Recording complete!")
-            
-            timestamp = int(time.time())
-            filename = f"recorded_voice_{timestamp}.wav"
-            filepath = os.path.join(RECORDED_DIR, filename)
-            
-            # Save as WAV file
-            sf.write(filepath, audio_data, sample_rate)
-            st.success(f"Audio saved to {filepath}")
-            
-            return filepath
+        audio = pyaudio.PyAudio()
+        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, 
+                            input=True, frames_per_buffer=1024)
+        
+        frames = []
+        for _ in range(0, int(sample_rate / 1024 * duration)):
+            data = stream.read(1024)
+            frames.append(data)
+        
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+        
+        timestamp = int(time.time())
+        filename = f"recorded_voice_{timestamp}.wav"
+        filepath = os.path.join(RECORDED_DIR, filename)
+        
+        with wave.open(filepath, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+            wf.setframerate(sample_rate)
+            wf.writeframes(b''.join(frames))
+        
+        st.success(f"Audio saved to {filepath}")
+        return filepath
     except Exception as e:
         st.error(f"Error recording audio: {str(e)}")
         return None
-
 def upload_voice_module():
     """Function to handle the upload cloned voice page"""
     section_heading("Upload Cloned Voice")
